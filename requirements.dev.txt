@@ -1,0 +1,13 @@
+-r requirements.txt
+
+asgi_lifespan
+flake8
+httpx
+pytest
+isort
+pytest-asyncio
+black
+mypy
+codecov
+pytest-cov
+bumpversion

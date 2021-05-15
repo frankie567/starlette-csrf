@@ -1,0 +1,7 @@
+{
+    "python.linting.enabled": true,
+    "python.linting.flake8Enabled": true,
+    "python.formatting.provider": "black",
+    "python.pythonPath": "./venv/bin/python",
+    "python.linting.mypyEnabled": true
+}
