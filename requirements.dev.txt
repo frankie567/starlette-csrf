@@ -2,6 +2,7 @@
 
 asgi_lifespan
 flake8
+flit
 httpx
 pytest
 isort
