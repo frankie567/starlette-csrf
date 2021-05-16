@@ -17,6 +17,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         cookie_name: str = "csrftoken",
         cookie_path: str = "/",
         cookie_domain: Optional[str] = None,
+        cookie_secure: bool = False,
+        cookie_httponly: bool = False,
+        cookie_samesite: str = "lax",
         header_name: str = "x-csrftoken",
         safe_methods: Set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
     ) -> None:
@@ -26,6 +29,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         self.cookie_name = cookie_name
         self.cookie_path = cookie_path
         self.cookie_domain = cookie_domain
+        self.cookie_secure = cookie_secure
+        self.cookie_httponly = cookie_httponly
+        self.cookie_samesite = cookie_samesite
         self.header_name = header_name
         self.safe_methods = safe_methods
 
@@ -51,6 +57,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 self._generate_csrf_token(),
                 path=self.cookie_path,
                 domain=self.cookie_domain,
+                secure=self.cookie_secure,
+                httponly=self.cookie_httponly,
+                samesite=self.cookie_samesite,
             )
 
         return response
