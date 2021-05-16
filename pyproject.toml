@@ -23,7 +23,6 @@ description-file = "README.md"
 requires-python = ">=3.7"
 requires = [
     "itsdangerous ==2.0.0",
-    "passlib ==1.7.4",
     "starlette >=0.14.2,<0.15.0"
 ]
 

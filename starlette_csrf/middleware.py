@@ -1,8 +1,8 @@
+import secrets
 from typing import Dict, Optional, Set, cast
 
 from itsdangerous import BadSignature
 from itsdangerous.url_safe import URLSafeSerializer
-from passlib.pwd import genword
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
@@ -77,12 +77,12 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         return False
 
     def _generate_csrf_token(self) -> str:
-        return cast(str, self.serializer.dumps(genword(entropy="strong")))
+        return cast(str, self.serializer.dumps(secrets.token_urlsafe(128)))
 
     def _csrf_tokens_match(self, token1: str, token2: str) -> bool:
         try:
             decoded1: str = self.serializer.loads(token1)
             decoded2: str = self.serializer.loads(token2)
-            return decoded1 == decoded2
+            return secrets.compare_digest(decoded1, decoded2)
         except BadSignature:
             return False
