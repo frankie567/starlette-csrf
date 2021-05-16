@@ -3,7 +3,7 @@
 Starlette middleware implementing Double Submit Cookie technique to mitigate CSRF.
 
 [![build](https://github.com/frankie567/starlette-csrf/workflows/Build/badge.svg)](https://github.com/frankie567/starlette-csrf/actions)
-[![codecov](https://codecov.io/gh/frankie567/starlette-csrf/branch/master/graph/badge.svg)](https://codecov.io/gh/frankie567/starlette-csrf)
+[![codecov](https://codecov.io/gh/frankie567/starlette-csrf/branch/main/graph/badge.svg?token=fL49kIvrj6)](https://codecov.io/gh/frankie567/starlette-csrf)
 [![PyPI version](https://badge.fury.io/py/starlette-csrf.svg)](https://badge.fury.io/py/starlette-csrf)
 [![Downloads](https://pepy.tech/badge/starlette-csrf)](https://pepy.tech/project/starlette-csrf)
 [![GitHub Sponsors](https://img.shields.io/github/sponsors/frankie567?style=social)](https://github.com/sponsors/frankie567)
