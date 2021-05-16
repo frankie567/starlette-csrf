@@ -6,8 +6,8 @@ from starlette import status
 
 
 @pytest.mark.asyncio
-async def test_get(test_client: httpx.AsyncClient):
-    response = await test_client.get("/get")
+async def test_get(test_client_all_sensitive: httpx.AsyncClient):
+    response = await test_client_all_sensitive.get("/get")
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -30,22 +30,59 @@ async def test_get(test_client: httpx.AsyncClient):
     ],
 )
 async def test_post_invalid_csrf(
-    test_client: httpx.AsyncClient, cookies: Dict[str, str], headers: Dict[str, str]
+    test_client_all_sensitive: httpx.AsyncClient,
+    cookies: Dict[str, str],
+    headers: Dict[str, str],
 ):
-    response = await test_client.post("/post", cookies=cookies, headers=headers)
+    response = await test_client_all_sensitive.post(
+        "/post", cookies=cookies, headers=headers
+    )
 
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 @pytest.mark.asyncio
-async def test_valid_csrf(test_client: httpx.AsyncClient):
-    response_get = await test_client.get("/get")
+async def test_valid_csrf(test_client_all_sensitive: httpx.AsyncClient):
+    response_get = await test_client_all_sensitive.get("/get")
     csrf_cookie = response_get.cookies["csrftoken"]
 
-    response_post = await test_client.post(
+    response_post = await test_client_all_sensitive.post(
         "/post",
         headers={"x-csrftoken": csrf_cookie},
         json={"hello": "world"},
     )
 
     assert response_post.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio
+async def test_some_sensitive_csrf(test_client_some_sensitive: httpx.AsyncClient):
+    response_get = await test_client_some_sensitive.get("/get")
+    csrf_cookie = response_get.cookies["csrftoken"]
+
+    response_post_not_sensitive = await test_client_some_sensitive.post(
+        "/post",
+        cookies={"foo": "bar"},
+        json={"hello": "world"},
+    )
+
+    assert response_post_not_sensitive.status_code == status.HTTP_200_OK
+
+    response_post_sensitive_no_csrf_token = await test_client_some_sensitive.post(
+        "/post",
+        cookies={"sensitive": "bar"},
+        json={"hello": "world"},
+    )
+
+    assert (
+        response_post_sensitive_no_csrf_token.status_code == status.HTTP_403_FORBIDDEN
+    )
+
+    response_post_sensitive_csrf_token = await test_client_some_sensitive.post(
+        "/post",
+        cookies={"sensitive": "bar"},
+        headers={"x-csrftoken": csrf_cookie},
+        json={"hello": "world"},
+    )
+
+    assert response_post_sensitive_csrf_token.status_code == status.HTTP_200_OK

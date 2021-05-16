@@ -55,6 +55,7 @@ app.add_middleware(CSRFMiddleware, secret="__CHANGE_ME__")
 ## Arguments
 
 * `secret` (`str`): Secret to sign the CSRF token value. **Be sure to choose a strong passphrase and keep it SECRET**.
+* `sensitive_cookies` (`Set[str]` - `None`): Set of cookie names that should trigger the CSRF check if they are present in the request. Useful if you have other authentication methods that don't rely on cookies and don't need CSRF enforcement. If this parameter is `None`, the default, CSRF is **always** enforced.
 * `cookie_name` (`str` - `csrftoken`): Name of the cookie.
 * `cookie_path` `str` - `/`): Cookie path.
 * `cookie_domain` (`Optional[str]` - `None`): Cookie domain. If your frontend and API lives in different sub-domains, be sure to set this argument with your root domain to allow your frontend sub-domain to read the cookie on the JavaScript side.

@@ -1,4 +1,5 @@
 import asyncio
+from typing import Callable
 
 import httpx
 import pytest
@@ -20,32 +21,50 @@ def event_loop():
 
 
 @pytest.fixture(scope="session")
-def test_app() -> Starlette:
-    async def get(request: Request):
-        return JSONResponse({"hello": "world"})
+def all_sensitive_csrfmiddleware() -> Middleware:
+    return Middleware(CSRFMiddleware, secret="SECRET")
 
-    async def post(request: Request):
-        json = await request.json()
-        return JSONResponse(json)
 
-    middleware = [Middleware(CSRFMiddleware, secret="SECRET")]
-
-    app = Starlette(
-        debug=True,
-        routes=[
-            Route("/get", get, methods=["GET"]),
-            Route("/post", post, methods=["POST"]),
-        ],
-        middleware=middleware,
-    )
-
-    return app
+@pytest.fixture(scope="session")
+def some_sensitive_csrfmiddleware() -> Middleware:
+    return Middleware(CSRFMiddleware, secret="SECRET", sensitive_cookies={"sensitive"})
 
 
 @pytest.fixture
-async def test_client(test_app: Starlette):
-    async with LifespanManager(test_app):
-        async with httpx.AsyncClient(
-            app=test_app, base_url="http://app.io"
-        ) as test_client:
+def app_generator() -> Callable[[Middleware], Starlette]:
+    def _app_generator(middleware: Middleware) -> Starlette:
+        async def get(request: Request):
+            return JSONResponse({"hello": "world"})
+
+        async def post(request: Request):
+            json = await request.json()
+            return JSONResponse(json)
+
+        app = Starlette(
+            debug=True,
+            routes=[
+                Route("/get", get, methods=["GET"]),
+                Route("/post", post, methods=["POST"]),
+            ],
+            middleware=[middleware],
+        )
+
+        return app
+
+    return _app_generator
+
+
+@pytest.fixture
+async def test_client_all_sensitive(app_generator, all_sensitive_csrfmiddleware):
+    app = app_generator(all_sensitive_csrfmiddleware)
+    async with LifespanManager(app):
+        async with httpx.AsyncClient(app=app, base_url="http://app.io") as test_client:
+            yield test_client
+
+
+@pytest.fixture
+async def test_client_some_sensitive(app_generator, some_sensitive_csrfmiddleware):
+    app = app_generator(some_sensitive_csrfmiddleware)
+    async with LifespanManager(app):
+        async with httpx.AsyncClient(app=app, base_url="http://app.io") as test_client:
             yield test_client

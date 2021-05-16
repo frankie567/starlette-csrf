@@ -1,4 +1,4 @@
-from typing import Optional, Set, cast
+from typing import Dict, Optional, Set, cast
 
 from itsdangerous import BadSignature
 from itsdangerous.url_safe import URLSafeSerializer
@@ -14,6 +14,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         self,
         app: ASGIApp,
         secret: str,
+        sensitive_cookies: Optional[Set[str]] = None,
         cookie_name: str = "csrftoken",
         cookie_path: str = "/",
         cookie_domain: Optional[str] = None,
@@ -26,6 +27,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.serializer = URLSafeSerializer(secret, "csrftoken")
         self.secret = secret
+        self.sensitive_cookies = sensitive_cookies
         self.cookie_name = cookie_name
         self.cookie_path = cookie_path
         self.cookie_domain = cookie_domain
@@ -38,7 +40,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         csrf_cookie = request.cookies.get(self.cookie_name)
 
-        if request.method not in self.safe_methods:
+        if request.method not in self.safe_methods and self._has_sensitive_cookies(
+            request.cookies
+        ):
             csrf_header = request.headers.get(self.header_name)
             if (
                 not csrf_cookie
@@ -63,6 +67,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             )
 
         return response
+
+    def _has_sensitive_cookies(self, cookies: Dict[str, str]) -> bool:
+        if not self.sensitive_cookies:
+            return True
+        for sensitive_cookie in self.sensitive_cookies:
+            if sensitive_cookie in cookies:
+                return True
+        return False
 
     def _generate_csrf_token(self) -> str:
         return cast(str, self.serializer.dumps(genword(entropy="strong")))
