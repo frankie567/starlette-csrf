@@ -8,7 +8,7 @@ Starlette middleware implementing Double Submit Cookie technique to mitigate CSR
 [![Downloads](https://pepy.tech/badge/starlette-csrf)](https://pepy.tech/project/starlette-csrf)
 
 <p align="center">
-    <a href="https://www.buymeacoffee.com/frankie567" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/arial-red.png" alt="Buy Me A Coffee" height="40"></a>
+    <a href="https://www.buymeacoffee.com/frankie567"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=frankie567&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00"></a>
 </p>
 
 ## How it works?
