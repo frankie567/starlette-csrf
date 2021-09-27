@@ -22,8 +22,8 @@ classifiers = [
 description-file = "README.md"
 requires-python = ">=3.7"
 requires = [
-    "itsdangerous ==2.0.0",
-    "starlette >=0.14.2,<0.15.0"
+    "itsdangerous ==2.0.1",
+    "starlette >=0.14.2,<0.17.0"
 ]
 
 [tool.flit.metadata.urls]
