@@ -66,6 +66,7 @@ app.add_middleware(CSRFMiddleware, secret="__CHANGE_ME__")
 * `cookie_samesite` (`str` - `lax`): Samesite strategy of the cookie.
 * `header_name` (`str` - `x-csrftoken`): Name of the header where you should set the CSRF token.
 * `safe_methods` (`Set[str]` - `{"GET", "HEAD", "OPTIONS", "TRACE"}`): HTTP methods considered safe which don't need CSRF protection.
+* `exempt_urls` (`Optional[List[re.Pattern]]` - `None`): List of URL regexes that the CSRF check should be skipped on. Useful if you have any APIs that you know do not need CSRF protection.
 
 ## Development
 

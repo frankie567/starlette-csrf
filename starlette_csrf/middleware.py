@@ -1,8 +1,10 @@
 import secrets
-from typing import Dict, Optional, Set, cast
+from re import Pattern
+from typing import Dict, List, Optional, Set, cast
 
 from itsdangerous import BadSignature
 from itsdangerous.url_safe import URLSafeSerializer
+from starlette.datastructures import URL
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse
@@ -23,6 +25,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         cookie_samesite: str = "lax",
         header_name: str = "x-csrftoken",
         safe_methods: Set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
+        exempt_urls: Optional[List[Pattern]] = None,
     ) -> None:
         super().__init__(app)
         self.serializer = URLSafeSerializer(secret, "csrftoken")
@@ -36,12 +39,15 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         self.cookie_samesite = cookie_samesite
         self.header_name = header_name
         self.safe_methods = safe_methods
+        self.exempt_urls = exempt_urls
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
         csrf_cookie = request.cookies.get(self.cookie_name)
 
-        if request.method not in self.safe_methods and self._has_sensitive_cookies(
-            request.cookies
+        if (
+            request.method not in self.safe_methods
+            and self._has_sensitive_cookies(request.cookies)
+            and not self._url_is_exempt(request.url)
         ):
             csrf_header = request.headers.get(self.header_name)
             if (
@@ -73,6 +79,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return True
         for sensitive_cookie in self.sensitive_cookies:
             if sensitive_cookie in cookies:
+                return True
+        return False
+
+    def _url_is_exempt(self, url: URL) -> bool:
+        if not self.exempt_urls:
+            return False
+        for exempt_url in self.exempt_urls:
+            if exempt_url.match(url.path):
                 return True
         return False
 
