@@ -86,3 +86,25 @@ async def test_some_sensitive_csrf(test_client_some_sensitive: httpx.AsyncClient
     )
 
     assert response_post_sensitive_csrf_token.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio
+async def test_some_exempt_csrf(test_client_some_exempt: httpx.AsyncClient):
+    response_get = await test_client_some_exempt.get("/get")
+    csrf_cookie = response_get.cookies["csrftoken"]
+
+    response_post_exempt = await test_client_some_exempt.post(
+        "/exempt",
+        cookies={"foo": "bar"},
+        json={"hello": "world"},
+    )
+
+    assert response_post_exempt.status_code == status.HTTP_200_OK
+
+    response_post_not_exempt = await test_client_some_exempt.post(
+        "/post",
+        cookies={"sensitive": "bar"},
+        json={"hello": "world"},
+    )
+
+    assert response_post_not_exempt.status_code == status.HTTP_403_FORBIDDEN
