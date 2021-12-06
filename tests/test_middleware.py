@@ -90,9 +90,6 @@ async def test_some_sensitive_csrf(test_client_some_sensitive: httpx.AsyncClient
 
 @pytest.mark.asyncio
 async def test_some_exempt_csrf(test_client_some_exempt: httpx.AsyncClient):
-    response_get = await test_client_some_exempt.get("/get")
-    csrf_cookie = response_get.cookies["csrftoken"]
-
     response_post_exempt = await test_client_some_exempt.post(
         "/exempt",
         cookies={"foo": "bar"},
