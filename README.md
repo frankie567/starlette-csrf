@@ -68,6 +68,22 @@ app.add_middleware(CSRFMiddleware, secret="__CHANGE_ME__")
 * `safe_methods` (`Set[str]` - `{"GET", "HEAD", "OPTIONS", "TRACE"}`): HTTP methods considered safe which don't need CSRF protection.
 * `exempt_urls` (`Optional[List[re.Pattern]]` - `None`): List of URL regexes that the CSRF check should be skipped on. Useful if you have any APIs that you know do not need CSRF protection.
 
+## Customize error response
+
+By default, a plain text response with the status code 403 is returned when the CSRF verification is failing. You can customize it by overloading the middleware class and implementing the `_get_error_response` method. It accepts in argument the original `Request` object and expects a `Response`. For example:
+
+```py
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
+from starlette_csrf import CSRFMiddleware
+
+class CustomResponseCSRFMiddleware(CSRFMiddleware):
+    def _get_error_response(self, request: Request) -> Response:
+        return JSONResponse(
+            content={"code": "CSRF_ERROR"}, status_code=403
+        )
+```
+
 ## Development
 
 ### Setup environment

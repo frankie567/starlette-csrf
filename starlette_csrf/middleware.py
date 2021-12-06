@@ -7,7 +7,7 @@ from itsdangerous.url_safe import URLSafeSerializer
 from starlette.datastructures import URL
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import Request
-from starlette.responses import PlainTextResponse
+from starlette.responses import PlainTextResponse, Response
 from starlette.types import ASGIApp
 
 
@@ -55,9 +55,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 or not csrf_header
                 or not self._csrf_tokens_match(csrf_cookie, csrf_header)
             ):
-                return PlainTextResponse(
-                    content="CSRF token verification failed", status_code=403
-                )
+                return self._get_error_response(request)
 
         response = await call_next(request)
 
@@ -100,3 +98,8 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             return secrets.compare_digest(decoded1, decoded2)
         except BadSignature:
             return False
+
+    def _get_error_response(self, request: Request) -> Response:
+        return PlainTextResponse(
+            content="CSRF token verification failed", status_code=403
+        )
