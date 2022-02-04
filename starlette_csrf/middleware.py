@@ -49,7 +49,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             and self._has_sensitive_cookies(request.cookies)
             and not self._url_is_exempt(request.url)
         ):
-            submitted_csrf_token = self._get_submitted_csrf_token(request)
+            submitted_csrf_token = await self._get_submitted_csrf_token(request)
             if (
                 not csrf_cookie
                 or not submitted_csrf_token
@@ -88,7 +88,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 return True
         return False
 
-    def _get_submitted_csrf_token(self, request: Request) -> Optional[str]:
+    async def _get_submitted_csrf_token(self, request: Request) -> Optional[str]:
         return request.headers.get(self.header_name)
 
     def _generate_csrf_token(self) -> str:
