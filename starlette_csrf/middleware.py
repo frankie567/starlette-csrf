@@ -49,11 +49,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             and self._has_sensitive_cookies(request.cookies)
             and not self._url_is_exempt(request.url)
         ):
-            csrf_header = request.headers.get(self.header_name)
+            submitted_csrf_token = self._get_submitted_csrf_token(request)
             if (
                 not csrf_cookie
-                or not csrf_header
-                or not self._csrf_tokens_match(csrf_cookie, csrf_header)
+                or not submitted_csrf_token
+                or not self._csrf_tokens_match(csrf_cookie, submitted_csrf_token)
             ):
                 return self._get_error_response(request)
 
@@ -87,6 +87,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
             if exempt_url.match(url.path):
                 return True
         return False
+
+    def _get_submitted_csrf_token(self, request: Request) -> Optional[str]:
+        return request.headers.get(self.header_name)
 
     def _generate_csrf_token(self) -> str:
         return cast(str, self.serializer.dumps(secrets.token_urlsafe(128)))
