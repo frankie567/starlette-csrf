@@ -19,7 +19,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.dev.txt
+        pip install flit
+        flit install --deps develop
     - name: Lint and typecheck
       run: |
         isort --check-only ./starlette_csrf ./tests
@@ -46,7 +47,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.dev.txt
+        pip install flit
+        flit install --deps develop
     - name: Release on PyPI
       env:
         FLIT_USERNAME: ${{ secrets.FLIT_USERNAME }}

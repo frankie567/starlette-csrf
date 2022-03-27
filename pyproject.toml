@@ -1,13 +1,24 @@
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [build-system]
-requires = ["flit_core >=2,<3"]
+requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
-[tool.flit.metadata]
-module = "starlette_csrf"
-dist-name = "starlette-csrf"
-author = "François Voron"
-author-email = "fvoron@gmail.com"
-home-page = "https://github.com/frankie567/starlette-csrf"
+[tool.flit.module]
+name = "starlette_csrf"
+
+[project]
+name = "starlette-csrf"
+authors = [
+  { name = "François Voron", email = "fvoron@gmail.com" }
+]
+description = "Starlette middleware implementing Double Submit Cookie technique to mitigate CSRF"
+readme = "README.md"
+dynamic = ["version"]
 classifiers = [
     "License :: OSI Approved :: MIT License",
     "Development Status :: 5 - Production/Stable",
@@ -20,12 +31,27 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Topic :: Internet :: WWW/HTTP :: Session",
 ]
-description-file = "README.md"
 requires-python = ">=3.7"
-requires = [
+dependencies = [
     "itsdangerous ==2.0.1",
     "starlette >=0.14.2,<0.19.0"
 ]
 
-[tool.flit.metadata.urls]
+[project.optional-dependencies]
+dev = [
+    "asgi_lifespan",
+    "flake8",
+    "flit",
+    "httpx",
+    "pytest",
+    "isort",
+    "pytest-asyncio",
+    "black",
+    "mypy",
+    "codecov",
+    "pytest-cov",
+    "bumpversion",
+]
+
+[project.urls]
 Documentation = "https://github.com/frankie567/starlette-csrf"
