@@ -1,17 +1,18 @@
+import functools
+import http.cookies
 import secrets
 from re import Pattern
 from typing import Dict, List, Optional, Set, cast
 
 from itsdangerous import BadSignature
 from itsdangerous.url_safe import URLSafeSerializer
-from starlette.datastructures import URL
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.datastructures import URL, MutableHeaders
 from starlette.requests import Request
 from starlette.responses import PlainTextResponse, Response
-from starlette.types import ASGIApp
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 
-class CSRFMiddleware(BaseHTTPMiddleware):
+class CSRFMiddleware:
     def __init__(
         self,
         app: ASGIApp,
@@ -27,7 +28,7 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         safe_methods: Set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
         exempt_urls: Optional[List[Pattern]] = None,
     ) -> None:
-        super().__init__(app)
+        self.app = app
         self.serializer = URLSafeSerializer(secret, "csrftoken")
         self.secret = secret
         self.sensitive_cookies = sensitive_cookies
@@ -41,7 +42,12 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         self.safe_methods = safe_methods
         self.exempt_urls = exempt_urls
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint):
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] not in ("http", "websocket"):  # pragma: no cover
+            await self.app(scope, receive, send)
+            return
+
+        request = Request(scope)
         csrf_cookie = request.cookies.get(self.cookie_name)
 
         if (
@@ -55,22 +61,33 @@ class CSRFMiddleware(BaseHTTPMiddleware):
                 or not submitted_csrf_token
                 or not self._csrf_tokens_match(csrf_cookie, submitted_csrf_token)
             ):
-                return self._get_error_response(request)
+                response = self._get_error_response(request)
+                await response(scope, receive, send)
+                return
 
-        response = await call_next(request)
+        send = functools.partial(self.send, send=send, scope=scope)
+        await self.app(scope, receive, send)
 
-        if not csrf_cookie:
-            response.set_cookie(
-                self.cookie_name,
-                self._generate_csrf_token(),
-                path=self.cookie_path,
-                domain=self.cookie_domain,
-                secure=self.cookie_secure,
-                httponly=self.cookie_httponly,
-                samesite=self.cookie_samesite,
-            )
+    async def send(self, message: Message, send: Send, scope: Scope) -> None:
+        request = Request(scope)
+        csrf_cookie = request.cookies.get(self.cookie_name)
 
-        return response
+        if csrf_cookie is None:
+            message.setdefault("headers", [])
+            headers = MutableHeaders(scope=message)
+
+            cookie: http.cookies.BaseCookie = http.cookies.SimpleCookie()
+            cookie_name = self.cookie_name
+            cookie[cookie_name] = self._generate_csrf_token()
+            cookie[cookie_name]["path"] = self.cookie_path
+            cookie[cookie_name]["secure"] = self.cookie_secure
+            cookie[cookie_name]["httponly"] = self.cookie_httponly
+            cookie[cookie_name]["samesite"] = self.cookie_samesite
+            if self.cookie_domain is not None:
+                cookie[cookie_name]["domain"] = self.cookie_domain  # pragma: no cover
+            headers.append("set-cookie", cookie.output(header="").strip())
+
+        await send(message)
 
     def _has_sensitive_cookies(self, cookies: Dict[str, str]) -> bool:
         if not self.sensitive_cookies:
