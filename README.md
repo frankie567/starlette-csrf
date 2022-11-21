@@ -88,28 +88,14 @@ class CustomResponseCSRFMiddleware(CSRFMiddleware):
 
 ### Setup environment
 
-You should create a virtual environment and activate it:
-
-```bash
-python -m venv venv/
-```
-
-```bash
-source venv/bin/activate
-```
-
-And then install the development dependencies:
-
-```bash
-pip install -r requirements.dev.txt
-```
+We use [Hatch](https://hatch.pypa.io/latest/install/) to manage the development environment and production build. Ensure it's installed on your system.
 
 ### Run unit tests
 
 You can run all the tests with:
 
 ```bash
-make test
+hatch run test
 ```
 
 ### Format the code
@@ -117,7 +103,7 @@ make test
 Execute the following command to apply `isort` and `black` formatting:
 
 ```bash
-make format
+hatch run lint
 ```
 
 ## License
