@@ -17,6 +17,9 @@ class CSRFMiddleware:
         self,
         app: ASGIApp,
         secret: str,
+        *,
+        required_urls: Optional[List[Pattern]] = None,
+        exempt_urls: Optional[List[Pattern]] = None,
         sensitive_cookies: Optional[Set[str]] = None,
         cookie_name: str = "csrftoken",
         cookie_path: str = "/",
@@ -26,11 +29,12 @@ class CSRFMiddleware:
         cookie_samesite: str = "lax",
         header_name: str = "x-csrftoken",
         safe_methods: Set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
-        exempt_urls: Optional[List[Pattern]] = None,
     ) -> None:
         self.app = app
         self.serializer = URLSafeSerializer(secret, "csrftoken")
         self.secret = secret
+        self.required_urls = required_urls
+        self.exempt_urls = exempt_urls
         self.sensitive_cookies = sensitive_cookies
         self.cookie_name = cookie_name
         self.cookie_path = cookie_path
@@ -40,7 +44,6 @@ class CSRFMiddleware:
         self.cookie_samesite = cookie_samesite
         self.header_name = header_name
         self.safe_methods = safe_methods
-        self.exempt_urls = exempt_urls
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] not in ("http", "websocket"):  # pragma: no cover
@@ -50,10 +53,10 @@ class CSRFMiddleware:
         request = Request(scope)
         csrf_cookie = request.cookies.get(self.cookie_name)
 
-        if (
+        if self._url_is_required(request.url) or (
             request.method not in self.safe_methods
-            and self._has_sensitive_cookies(request.cookies)
             and not self._url_is_exempt(request.url)
+            and self._has_sensitive_cookies(request.cookies)
         ):
             submitted_csrf_token = await self._get_submitted_csrf_token(request)
             if (
@@ -94,6 +97,14 @@ class CSRFMiddleware:
             return True
         for sensitive_cookie in self.sensitive_cookies:
             if sensitive_cookie in cookies:
+                return True
+        return False
+
+    def _url_is_required(self, url: URL) -> bool:
+        if not self.required_urls:
+            return False
+        for required_url in self.required_urls:
+            if required_url.match(url.path):
                 return True
         return False
 

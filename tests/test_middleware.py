@@ -91,6 +91,43 @@ async def test_valid_csrf():
 
 
 @pytest.mark.asyncio
+async def test_required_urls():
+    async with get_test_client(get_app(required_urls=[re.compile(r"/get")])) as client:
+        response_get_required = await client.get("/get")
+        assert response_get_required.status_code == status.HTTP_403_FORBIDDEN
+
+    async with get_test_client(
+        get_app(required_urls=[re.compile(r"/post1")], sensitive_cookies={"sensitive"})
+    ) as client:
+        response_post_required = await client.post(
+            "/post1",
+            json={"hello": "world"},
+        )
+        assert response_post_required.status_code == status.HTTP_403_FORBIDDEN
+
+        response_get = await client.get("/get")
+        assert response_get.status_code == status.HTTP_200_OK
+
+
+@pytest.mark.asyncio
+async def test_exempt_urls():
+    async with get_test_client(get_app(exempt_urls=[re.compile(r"/post1")])) as client:
+        response_post_exempt = await client.post(
+            "/post1",
+            cookies={"foo": "bar"},
+            json={"hello": "world"},
+        )
+        assert response_post_exempt.status_code == status.HTTP_200_OK
+
+        response_post_not_exempt = await client.post(
+            "/post2",
+            cookies={"sensitive": "bar"},
+            json={"hello": "world"},
+        )
+        assert response_post_not_exempt.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.asyncio
 async def test_sensitive_cookies():
     async with get_test_client(get_app(sensitive_cookies={"sensitive"})) as client:
         response_get = await client.get("/get")
@@ -120,21 +157,3 @@ async def test_sensitive_cookies():
             json={"hello": "world"},
         )
         assert response_post_sensitive_csrf_token.status_code == status.HTTP_200_OK
-
-
-@pytest.mark.asyncio
-async def test_exempt_urls():
-    async with get_test_client(get_app(exempt_urls=[re.compile(r"/post1")])) as client:
-        response_post_exempt = await client.post(
-            "/post1",
-            cookies={"foo": "bar"},
-            json={"hello": "world"},
-        )
-        assert response_post_exempt.status_code == status.HTTP_200_OK
-
-        response_post_not_exempt = await client.post(
-            "/post2",
-            cookies={"sensitive": "bar"},
-            json={"hello": "world"},
-        )
-        assert response_post_not_exempt.status_code == status.HTTP_403_FORBIDDEN
