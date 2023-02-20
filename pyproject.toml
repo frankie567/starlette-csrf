@@ -1,5 +1,5 @@
-[tool.isort]
-profile = "black"
+[tool.ruff]
+extend-select = ["I"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=starlette_csrf/ --cov-report=term-missing --cov-fail-under=100"
@@ -20,7 +20,7 @@ dependencies = [
     "asgi_lifespan",
     "httpx",
     "pytest",
-    "isort",
+    "ruff",
     "pytest-asyncio",
     "black",
     "mypy",
@@ -31,13 +31,13 @@ dependencies = [
 test = "pytest"
 test-cov-xml = "pytest --cov-report=xml"
 lint = [
-  "isort ./starlette_csrf ./tests",
   "black .",
+  "ruff --fix .",
   "mypy starlette_csrf/",
 ]
 lint-check = [
-  "isort --check-only ./starlette_csrf ./tests",
   "black --check .",
+  "ruff .",
   "mypy starlette_csrf/",
 ]
 
