@@ -58,15 +58,16 @@ app.add_middleware(CSRFMiddleware, secret="__CHANGE_ME__")
 ## Arguments
 
 * `secret` (`str`): Secret to sign the CSRF token value. **Be sure to choose a strong passphrase and keep it SECRET**.
+* `required_urls` (`Optional[List[re.Pattern]]` - `None`): List of URL regexes that the CSRF check should **always** be enforced, no matter the method or the cookies present.
+* `exempt_urls` (`Optional[List[re.Pattern]]` - `None`): List of URL regexes that the CSRF check should be skipped on. Useful if you have any APIs that you know do not need CSRF protection.
 * `sensitive_cookies` (`Set[str]` - `None`): Set of cookie names that should trigger the CSRF check if they are present in the request. Useful if you have other authentication methods that don't rely on cookies and don't need CSRF enforcement. If this parameter is `None`, the default, CSRF is **always** enforced.
+* `safe_methods` (`Set[str]` - `{"GET", "HEAD", "OPTIONS", "TRACE"}`): HTTP methods considered safe which don't need CSRF protection.
 * `cookie_name` (`str` - `csrftoken`): Name of the cookie.
 * `cookie_path` `str` - `/`): Cookie path.
 * `cookie_domain` (`Optional[str]` - `None`): Cookie domain. If your frontend and API lives in different sub-domains, be sure to set this argument with your root domain to allow your frontend sub-domain to read the cookie on the JavaScript side.
 * `cookie_secure` (`bool` - `False`): Whether to only send the cookie to the server via SSL request.
 * `cookie_samesite` (`str` - `lax`): Samesite strategy of the cookie.
 * `header_name` (`str` - `x-csrftoken`): Name of the header where you should set the CSRF token.
-* `safe_methods` (`Set[str]` - `{"GET", "HEAD", "OPTIONS", "TRACE"}`): HTTP methods considered safe which don't need CSRF protection.
-* `exempt_urls` (`Optional[List[re.Pattern]]` - `None`): List of URL regexes that the CSRF check should be skipped on. Useful if you have any APIs that you know do not need CSRF protection.
 
 ## Customize error response
 

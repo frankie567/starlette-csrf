@@ -21,6 +21,7 @@ class CSRFMiddleware:
         required_urls: Optional[List[Pattern]] = None,
         exempt_urls: Optional[List[Pattern]] = None,
         sensitive_cookies: Optional[Set[str]] = None,
+        safe_methods: Set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
         cookie_name: str = "csrftoken",
         cookie_path: str = "/",
         cookie_domain: Optional[str] = None,
@@ -28,7 +29,6 @@ class CSRFMiddleware:
         cookie_httponly: bool = False,
         cookie_samesite: str = "lax",
         header_name: str = "x-csrftoken",
-        safe_methods: Set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
     ) -> None:
         self.app = app
         self.serializer = URLSafeSerializer(secret, "csrftoken")
@@ -36,6 +36,7 @@ class CSRFMiddleware:
         self.required_urls = required_urls
         self.exempt_urls = exempt_urls
         self.sensitive_cookies = sensitive_cookies
+        self.safe_methods = safe_methods
         self.cookie_name = cookie_name
         self.cookie_path = cookie_path
         self.cookie_domain = cookie_domain
@@ -43,7 +44,6 @@ class CSRFMiddleware:
         self.cookie_httponly = cookie_httponly
         self.cookie_samesite = cookie_samesite
         self.header_name = header_name
-        self.safe_methods = safe_methods
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] not in ("http", "websocket"):  # pragma: no cover
