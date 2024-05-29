@@ -55,6 +55,48 @@ app = FastAPI()
 app.add_middleware(CSRFMiddleware, secret="__CHANGE_ME__")
 ```
 
+## Usage with FastAPI and HTML forms
+
+Add the starlette_csrf middleware and utilize the following template processor in your FastAPI code:
+
+```py
+import typing
+from fastapi.templating import Jinja2Templates
+from fastapi import Request
+from app.core.config import settings
+
+def csrf_token_processor(request: Request)  -> typing.Dict[str, typing.Any]:
+    csrf_token = request.cookies.get(settings.CSRF_COOKIE_NAME)
+    csrf_input = f'<input type="hidden" name="X-CSRF-Token" value="{csrf_token}">'
+    csrf_header = {settings.CSRF_HEADER_NAME: csrf_token}
+    return {
+        'csrf_token': csrf_token,
+        'csrf_input': csrf_input,
+        'csrf_header': csrf_header 
+        }
+
+templates = Jinja2Templates(directory="templates", context_processors=[csrf_token_processor])
+```
+
+Simply using {{ csrf_input | safe }} in each form is now sufficient to ensure a more secure web application. For example:
+
+```html
+<form method="post">
+    {{ csrf_input | safe }}
+    <!-- Other form fields here -->
+    <button type="submit">Submit</button>
+</form>
+```
+
+Furthermore, we can use {{ csrf_header }} in HTMX requests. For example:
+
+```html
+<form hx-patch="/route/edit" hx-headers='{{ csrf_header | tojson | safe }}'  hx-trigger="submit" hx-target="#yourtarget" hx-swap="outerHTML" >
+    <!-- Other form fields here -->
+    <button type="submit">Submit</button>
+</form>
+```
+
 ## Arguments
 
 * `secret` (`str`): Secret to sign the CSRF token value. **Be sure to choose a strong passphrase and keep it SECRET**.
