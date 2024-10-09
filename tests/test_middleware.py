@@ -1,6 +1,5 @@
 import contextlib
 import re
-from typing import Dict
 
 import httpx
 import pytest
@@ -39,7 +38,9 @@ def get_app(**middleware_kwargs) -> Starlette:
 @contextlib.asynccontextmanager
 async def get_test_client(app: Starlette):
     async with LifespanManager(app):
-        async with httpx.AsyncClient(app=app, base_url="http://app.io") as test_client:
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app), base_url="http://app.io"
+        ) as test_client:
             yield test_client
 
 
@@ -68,9 +69,10 @@ async def test_get():
         ({"csrftoken": "aaa"}, {"x-csrftoken": "aaa"}),
     ],
 )
-async def test_post_invalid_csrf(cookies: Dict[str, str], headers: Dict[str, str]):
+async def test_post_invalid_csrf(cookies: dict[str, str], headers: dict[str, str]):
     async with get_test_client(get_app()) as client:
-        response = await client.post("/post1", cookies=cookies, headers=headers)
+        client.cookies = cookies
+        response = await client.post("/post1", headers=headers)
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -112,18 +114,12 @@ async def test_required_urls():
 @pytest.mark.asyncio
 async def test_exempt_urls():
     async with get_test_client(get_app(exempt_urls=[re.compile(r"/post1")])) as client:
-        response_post_exempt = await client.post(
-            "/post1",
-            cookies={"foo": "bar"},
-            json={"hello": "world"},
-        )
+        client.cookies = {"foo": "bar"}
+        response_post_exempt = await client.post("/post1", json={"hello": "world"})
         assert response_post_exempt.status_code == status.HTTP_200_OK
 
-        response_post_not_exempt = await client.post(
-            "/post2",
-            cookies={"sensitive": "bar"},
-            json={"hello": "world"},
-        )
+        client.cookies = {"sensitive": "bar"}
+        response_post_not_exempt = await client.post("/post2", json={"hello": "world"})
         assert response_post_not_exempt.status_code == status.HTTP_403_FORBIDDEN
 
 
@@ -133,27 +129,23 @@ async def test_sensitive_cookies():
         response_get = await client.get("/get")
         csrf_cookie = response_get.cookies["csrftoken"]
 
+        client.cookies = {"foo": "bar"}
         response_post_not_sensitive = await client.post(
-            "/post1",
-            cookies={"foo": "bar"},
-            json={"hello": "world"},
+            "/post1", json={"hello": "world"}
         )
         assert response_post_not_sensitive.status_code == status.HTTP_200_OK
 
+        client.cookies = {"sensitive": "bar"}
         response_post_sensitive_no_csrf_token = await client.post(
-            "/post1",
-            cookies={"sensitive": "bar"},
-            json={"hello": "world"},
+            "/post1", json={"hello": "world"}
         )
         assert (
             response_post_sensitive_no_csrf_token.status_code
             == status.HTTP_403_FORBIDDEN
         )
 
+        client.cookies = {"sensitive": "bar", "csrftoken": csrf_cookie}
         response_post_sensitive_csrf_token = await client.post(
-            "/post1",
-            cookies={"sensitive": "bar"},
-            headers={"x-csrftoken": csrf_cookie},
-            json={"hello": "world"},
+            "/post1", headers={"x-csrftoken": csrf_cookie}, json={"hello": "world"}
         )
         assert response_post_sensitive_csrf_token.status_code == status.HTTP_200_OK

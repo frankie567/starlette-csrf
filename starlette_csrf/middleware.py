@@ -2,7 +2,7 @@ import functools
 import http.cookies
 import secrets
 from re import Pattern
-from typing import Dict, List, Optional, Set, cast
+from typing import Optional, cast
 
 from itsdangerous import BadSignature
 from itsdangerous.url_safe import URLSafeSerializer
@@ -18,10 +18,10 @@ class CSRFMiddleware:
         app: ASGIApp,
         secret: str,
         *,
-        required_urls: Optional[List[Pattern]] = None,
-        exempt_urls: Optional[List[Pattern]] = None,
-        sensitive_cookies: Optional[Set[str]] = None,
-        safe_methods: Set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
+        required_urls: Optional[list[Pattern]] = None,
+        exempt_urls: Optional[list[Pattern]] = None,
+        sensitive_cookies: Optional[set[str]] = None,
+        safe_methods: set[str] = {"GET", "HEAD", "OPTIONS", "TRACE"},
         cookie_name: str = "csrftoken",
         cookie_path: str = "/",
         cookie_domain: Optional[str] = None,
@@ -92,7 +92,7 @@ class CSRFMiddleware:
 
         await send(message)
 
-    def _has_sensitive_cookies(self, cookies: Dict[str, str]) -> bool:
+    def _has_sensitive_cookies(self, cookies: dict[str, str]) -> bool:
         if not self.sensitive_cookies:
             return True
         for sensitive_cookie in self.sensitive_cookies:
