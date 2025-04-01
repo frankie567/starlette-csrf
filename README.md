@@ -40,6 +40,8 @@ middleware = [
 app = Starlette(routes=routes, middleware=middleware)
 ```
 
+Note: `secret` must not change between restarts, otherwise old tokens become invalid after restart
+
 ## Usage with FastAPI
 
 ```py
