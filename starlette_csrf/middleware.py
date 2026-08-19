@@ -46,7 +46,7 @@ class CSRFMiddleware:
         self.header_name = header_name
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] not in ("http", "websocket"):  # pragma: no cover
+        if scope["type"] != "http":  # pragma: no cover
             await self.app(scope, receive, send)
             return
 
