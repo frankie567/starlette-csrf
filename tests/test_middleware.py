@@ -9,7 +9,9 @@ from starlette.applications import Starlette
 from starlette.middleware import Middleware
 from starlette.requests import Request
 from starlette.responses import JSONResponse
-from starlette.routing import Route
+from starlette.routing import Route, WebSocketRoute
+from starlette.testclient import TestClient
+from starlette.websockets import WebSocket
 
 from starlette_csrf import CSRFMiddleware
 
@@ -149,3 +151,24 @@ async def test_sensitive_cookies():
             "/post1", headers={"x-csrftoken": csrf_cookie}, json={"hello": "world"}
         )
         assert response_post_sensitive_csrf_token.status_code == status.HTTP_200_OK
+
+
+def test_websocket():
+    async def websocket_endpoint(websocket: WebSocket):
+        await websocket.accept()
+        data = await websocket.receive_text()
+        await websocket.send_text(f"echo: {data}")
+        await websocket.close()
+
+    app = Starlette(
+        routes=[
+            WebSocketRoute("/ws", websocket_endpoint),
+        ],
+        middleware=[Middleware(CSRFMiddleware, secret="SECRET")],
+    )
+
+    client = TestClient(app)
+    with client.websocket_connect("/ws") as websocket:
+        websocket.send_text("hello")
+        data = websocket.receive_text()
+        assert data == "echo: hello"
